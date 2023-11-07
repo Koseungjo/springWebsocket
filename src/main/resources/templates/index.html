@@ -154,7 +154,7 @@
 <div id="app">
   <div class="enter-area" v-if="!entered">
     <h2>채팅방 입장</h2>
-    <input type="text" v-model="name" placeholder="이름을 입력하세요" />
+    <input type="text" v-model="name" placeholder="이름을 입력하세요" @keyup.enter="enterRoom" />
     <button @click="enterRoom">입장하기</button>
   </div>
 
@@ -169,7 +169,7 @@
 
   <!-- 메시지 입력 영역 -->
   <div class="send-area" v-if="entered">
-    <input type="text" v-model="text" placeholder="메시지를 입력하세요" />
+    <input type="text" v-model="text" placeholder="메시지를 입력하세요" @keyup.enter="sendMessage" />
     <button @click="sendMessage">보내기</button>
   </div>
 
