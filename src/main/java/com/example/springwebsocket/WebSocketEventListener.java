@@ -1,5 +1,7 @@
 package com.example.springwebsocket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -23,20 +26,21 @@ public class WebSocketEventListener {
     private final SimpMessagingTemplate messagingTemplate;
     private final StringRedisTemplate redisTemplate;
     private final SessionTracker sessionTracker;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
 
     @EventListener
-    public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+    public void handleWebSocketConnectListener(SessionConnectedEvent event) throws JsonProcessingException {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
 
-        // 세션이 처음 연결됐는지 확인하는 로직이 필요합니다. 예를 들면:
         if (sessionTracker.isNewConnection(sessionId)) {
             List<String> chatHistory = redisTemplate.opsForList().range("chatHistory", 0, -1);
 
-            // 채팅 기록을 새로 연결된 클라이언트에게 전송합니다.
             if (chatHistory != null) {
-                chatHistory.forEach(message -> messagingTemplate.convertAndSendToUser(sessionId, "/topic/messages", message));
+                // JSON 배열 형태로 변환
+                String chatHistoryJson = objectMapper.writeValueAsString(chatHistory);
+                messagingTemplate.convertAndSendToUser(sessionId, "/queue/chatHistory", chatHistoryJson);
             }
         }
 
@@ -45,11 +49,12 @@ public class WebSocketEventListener {
 
 
     @EventListener
-    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
+    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) throws JsonProcessingException {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
         sessionTracker.removeSession(sessionId);
         String username = (String) headerAccessor.getSessionAttributes().get("username");
+
         if(username != null) {
             logger.info("User Disconnected : " + username);
 
