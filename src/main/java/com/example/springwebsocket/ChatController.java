@@ -3,11 +3,11 @@ package com.example.springwebsocket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +21,19 @@ public class ChatController {
 
     private final RedisService redisService;
     private final ObjectMapper objectMapper; // Add this to convert objects to JSON
+    private final SimpMessagingTemplate messagingTemplate;
+    private final SessionTracker sessionTracker;
+
+    @MessageMapping("/chat.addUser")
+    public void addUser(AddUser addUser, SimpMessageHeaderAccessor headerAccessor) {
+        String username = addUser.getUsername();
+        headerAccessor.getSessionAttributes().put("username", username);
+        sessionTracker.addUserSession(headerAccessor.getSessionId(), username);
+
+        OutputMessage outputMessage = new OutputMessage("system", username + " 님이 입장하셨습니다.", new Date());
+        messagingTemplate.convertAndSend("/topic/messages", outputMessage);
+    }
+
 
     @MessageMapping("/message")
     @SendTo("/topic/messages")
