@@ -30,7 +30,7 @@ public class WebSocketEventListener {
         String sessionId = headerAccessor.getSessionId();
 
         if (sessionTracker.isNewConnection(sessionId)) {
-            List<String> chatHistory = redisTemplate.opsForList().range("chatHistory", 0, -1);
+            List<String> chatHistory = redisTemplate.opsForList().range("Chat_History_2", 0, -1);
 
             if (chatHistory != null) {
                 chatHistory.forEach(message -> messagingTemplate.convertAndSendToUser(sessionId, "/topic/messages", message));

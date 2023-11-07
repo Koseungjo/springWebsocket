@@ -42,7 +42,7 @@ public class ChatController {
         try {
             String jsonMessage = objectMapper.writeValueAsString(outputMessage);
 
-            redisService.addMessageToList("Chat_History", jsonMessage);
+            redisService.addMessageToList("Chat_History_2", jsonMessage);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -55,7 +55,7 @@ public class ChatController {
             @RequestParam(required = false, defaultValue = "0") long start,
             @RequestParam(required = false, defaultValue = "-1") long end) {
 
-        List<String> messages = redisService.getMessagesFromList("Chat_History", start, end);
+        List<String> messages = redisService.getMessagesFromList("Chat_History_2", start, end);
         return ResponseEntity.ok(messages);
     }
 }
