@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Date;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -30,5 +34,15 @@ public class ChatController {
             e.printStackTrace();
         }
         return outputMessage;
+    }
+
+    // 여기에 새 메소드를 추가합니다.
+    @GetMapping("/history")
+    public ResponseEntity<List<String>> getMessagesFromList(
+            @RequestParam(required = false, defaultValue = "0") long start,
+            @RequestParam(required = false, defaultValue = "-1") long end) {
+
+        List<String> messages = redisService.getMessagesFromList("chatHistory", start, end);
+        return ResponseEntity.ok(messages);
     }
 }
