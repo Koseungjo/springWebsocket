@@ -32,6 +32,8 @@ public class WebSocketEventListener {
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) throws JsonProcessingException {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        String username = headerAccessor.getUser().getName(); // 또는 세션에서 얻은 사용자 이름
+        headerAccessor.getSessionAttributes().put("username", username);
         String sessionId = headerAccessor.getSessionId();
 
         if (sessionTracker.isNewConnection(sessionId)) {

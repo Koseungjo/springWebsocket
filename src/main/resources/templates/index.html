@@ -200,23 +200,13 @@
           // 연결 성공 후 입장 메시지를 보낸다.
           self.stompClient.send("/app/chat.addUser", {}, JSON.stringify({sender: self.name, type: 'JOIN'}));
 
-          self.stompClient.subscribe('/user/queue/chatHistory', function(chatHistoryMessage) {
-            var chatHistory = JSON.parse(chatHistoryMessage.body);
-            chatHistory.forEach(function(message) {
-              self.messages.push(JSON.parse(message));
-            });
-          });
-
-          self.messages.push({from: 'System', text: self.name + '님이 입장하셨습니다.'});
-
-          // 메시지 구독 설정
-          self.stompClient.subscribe('/topic/messages', function(message) {
-            var messageBody = JSON.parse(message.body);
-            self.messages.push({from: messageBody.from, text: messageBody.text});
-            self.$nextTick(function () {
-              var chatRoom = document.getElementById('chat-room');
-              chatRoom.scrollTop = chatRoom.scrollHeight;
-            });
+          self.stompClient.subscribe('/topic/public', function(chatHistoryMessage) {
+            var messageBody = JSON.parse(chatHistoryMessage.body);
+            if (messageBody.type === 'HISTORY') {
+              self.messages = messageBody.messages.map(msg => JSON.parse(msg));
+            } else {
+              self.messages.push(messageBody);
+            }
           });
         }, function(error) {
           // 연결 오류 처리
