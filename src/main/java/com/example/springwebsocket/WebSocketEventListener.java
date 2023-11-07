@@ -22,24 +22,33 @@ public class WebSocketEventListener {
     private static final Logger logger = LoggerFactory.getLogger(WebSocketEventListener.class);
     private final SimpMessagingTemplate messagingTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final SessionTracker sessionTracker;
 
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        List<String> chatHistory = redisTemplate.opsForList().range("chatHistory", 0, -1);
+        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = headerAccessor.getSessionId();
 
-        // 채팅 기록을 새로 연결된 클라이언트에게 전송합니다.
-        if (chatHistory != null) {
-            chatHistory.forEach(message -> messagingTemplate.convertAndSend("/topic/messages", message));
+        // 세션이 처음 연결됐는지 확인하는 로직이 필요합니다. 예를 들면:
+        if (sessionTracker.isNewConnection(sessionId)) {
+            List<String> chatHistory = redisTemplate.opsForList().range("chatHistory", 0, -1);
+
+            // 채팅 기록을 새로 연결된 클라이언트에게 전송합니다.
+            if (chatHistory != null) {
+                chatHistory.forEach(message -> messagingTemplate.convertAndSendToUser(sessionId, "/topic/messages", message));
+            }
         }
 
         logger.info("Received a new web socket connection");
     }
 
+
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
+        String sessionId = headerAccessor.getSessionId();
+        sessionTracker.removeSession(sessionId);
         String username = (String) headerAccessor.getSessionAttributes().get("username");
         if(username != null) {
             logger.info("User Disconnected : " + username);
