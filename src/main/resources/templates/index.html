@@ -155,7 +155,7 @@
   <div class="enter-area" v-if="!entered">
     <h2>채팅방 입장</h2>
     <input type="text" v-model="name" placeholder="이름을 입력하세요" @keyup.enter="enterRoom" />
-    <button @click="enterRoom">ㅎㅇㅎㅇ</button>
+    <button @click="enterRoom">입장하기</button>
   </div>
 
 
@@ -182,6 +182,9 @@
       entered: false,
       messages: [],
       stompClient: null
+    },
+    created: function() {
+      this.connectToChat();
     },
     methods: {
       enterRoom: function() {
@@ -223,7 +226,16 @@
         self.stompClient.connect({}, function(frame) {
           self.stompClient.subscribe('/topic/messages', function(message) {
             var messageBody = JSON.parse(message.body);
-            self.messages.push({from: messageBody.from, text: messageBody.text});
+
+            // OutputMessage 형식에 맞게 메시지를 처리합니다.
+            var formattedMessage = {
+              from: messageBody.from,
+              text: messageBody.text,
+              time: new Date(messageBody.time)
+            };
+
+            self.messages.push(formattedMessage);
+
             self.$nextTick(function () {
               var chatRoom = document.getElementById('chat-room');
               chatRoom.scrollTop = chatRoom.scrollHeight;
@@ -235,7 +247,15 @@
         if (this.text.trim() === '') {
           return;
         }
-        this.stompClient.send("/app/message", {}, JSON.stringify({from: this.name, text: this.text}));
+
+        // OutputMessage 형식에 맞게 메시지 객체를 전송합니다.
+        var messageToSend = {
+          from: this.name,
+          text: this.text,
+          time: new Date().toISOString() // 시간을 ISO 형식으로 추가합니다.
+        };
+
+        this.stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
         this.text = '';
       }
     }

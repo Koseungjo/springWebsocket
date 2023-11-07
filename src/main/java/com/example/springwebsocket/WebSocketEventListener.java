@@ -1,9 +1,11 @@
 package com.example.springwebsocket;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -11,21 +13,26 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.Date;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class WebSocketEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketEventListener.class);
     private final SimpMessagingTemplate messagingTemplate;
+    private final StringRedisTemplate redisTemplate;
 
-    @Autowired
-    public WebSocketEventListener(SimpMessagingTemplate messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        // 연결 이벤트 처리 로직
+        List<String> chatHistory = redisTemplate.opsForList().range("chatHistory", 0, -1);
+
+        // 채팅 기록을 새로 연결된 클라이언트에게 전송합니다.
+        if (chatHistory != null) {
+            chatHistory.forEach(message -> messagingTemplate.convertAndSend("/topic/messages", message));
+        }
+
         logger.info("Received a new web socket connection");
     }
 
