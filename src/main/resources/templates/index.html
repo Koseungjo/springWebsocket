@@ -218,31 +218,6 @@
           self.entered = false;
         });
       },
-      connectToChat: function() {
-        var self = this;
-        var socket = new SockJS('/chat');
-        self.stompClient = Stomp.over(socket);
-
-        self.stompClient.connect({}, function(frame) {
-          self.stompClient.subscribe('/topic/messages', function(message) {
-            var messageBody = JSON.parse(message.body);
-
-            // OutputMessage 형식에 맞게 메시지를 처리합니다.
-            var formattedMessage = {
-              from: messageBody.from,
-              text: messageBody.text,
-              time: new Date(messageBody.time)
-            };
-
-            self.messages.push(formattedMessage);
-
-            self.$nextTick(function () {
-              var chatRoom = document.getElementById('chat-room');
-              chatRoom.scrollTop = chatRoom.scrollHeight;
-            });
-          });
-        });
-      },
       sendMessage: function() {
         if (this.text.trim() === '') {
           return;
