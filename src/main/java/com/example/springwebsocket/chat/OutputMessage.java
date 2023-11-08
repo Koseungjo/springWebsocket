@@ -1,4 +1,4 @@
-package com.example.springwebsocket;
+package com.example.springwebsocket.chat;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

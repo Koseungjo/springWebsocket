@@ -1,4 +1,4 @@
-package com.example.springwebsocket;
+package com.example.springwebsocket.chat;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

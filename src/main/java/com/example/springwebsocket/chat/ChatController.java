@@ -1,4 +1,4 @@
-package com.example.springwebsocket;
+package com.example.springwebsocket.chat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +9,9 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Date;
@@ -49,7 +51,11 @@ public class ChatController {
         return outputMessage;
     }
 
-    // 여기에 새 메소드를 추가합니다.
+    @DeleteMapping("/message")
+    public void deleteMessage(@RequestBody String key){
+        redisService.deleteMessage(key);
+    }
+
     @GetMapping("/history")
     public ResponseEntity<List<String>> getMessagesFromList(
             @RequestParam(required = false, defaultValue = "0") long start,
